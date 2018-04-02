@@ -16,8 +16,9 @@ import java.util.List;
  */
 public class Player extends AnimatedSpriteObject implements ICollidableWithTiles {
 
-	long previousMillis;
+	private long previousMillis;
     final int size = 16;
+    private int HP = 8;
     private final WaterWorld world;
 
     /**
@@ -26,9 +27,9 @@ public class Player extends AnimatedSpriteObject implements ICollidableWithTiles
      */
     public Player(WaterWorld world) {
         super(new Sprite("src/main/java/nl/han/ica/waterworld/media/player.png"), 4);
-        this.world=world;
+        this.world = world;
         setCurrentFrameIndex(1);
-        setFriction(0.05f);
+        setFriction(0.15f);
     }
 
     @Override
@@ -73,7 +74,7 @@ public class Player extends AnimatedSpriteObject implements ICollidableWithTiles
         */
         if (key == 'a') {
             setDirectionSpeed(270, speed);
-            animate('a');
+            animate(key);
             //setCurrentFrameIndex(0);
         }
         if (key == 'w') {
@@ -81,7 +82,7 @@ public class Player extends AnimatedSpriteObject implements ICollidableWithTiles
         }
         if (key == 'd') {
             setDirectionSpeed(90, speed);
-            animate('d');
+            animate(key);
            // setCurrentFrameIndex(1);
         }
         if (key == 's') {
@@ -157,4 +158,14 @@ public class Player extends AnimatedSpriteObject implements ICollidableWithTiles
     		setCurrentFrameIndex(2);
     	}
     }
+
+	public int getHP() {
+		return HP;
+	}
+
+	public void setHP(int hP) {
+		HP = hP;
+	}
+    
+    
 }

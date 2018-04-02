@@ -1,9 +1,13 @@
 package nl.han.ica.waterworld;
 
+import java.io.UnsupportedEncodingException;
+
 import com.sun.prism.image.ViewPort;
 import nl.han.ica.OOPDProcessingEngineHAN.Dashboard.Dashboard;
 import nl.han.ica.OOPDProcessingEngineHAN.Engine.GameEngine;
-import nl.han.ica.OOPDProcessingEngineHAN.Objects.Sprite;
+import nl.han.ica.OOPDProcessingEngineHAN.Objects.*;
+import nl.han.ica.OOPDProcessingEngineHAN.Objects.SpriteObject;
+import nl.han.ica.OOPDProcessingEngineHAN.Objects.TextObject;
 import nl.han.ica.OOPDProcessingEngineHAN.Persistence.FilePersistence;
 import nl.han.ica.OOPDProcessingEngineHAN.Persistence.IPersistence;
 import nl.han.ica.OOPDProcessingEngineHAN.Sound.Sound;
@@ -11,7 +15,8 @@ import nl.han.ica.OOPDProcessingEngineHAN.Tile.TileMap;
 import nl.han.ica.OOPDProcessingEngineHAN.Tile.TileType;
 import nl.han.ica.OOPDProcessingEngineHAN.View.EdgeFollowingViewport;
 import nl.han.ica.OOPDProcessingEngineHAN.View.View;
-import nl.han.ica.waterworld.tiles.BoardsTile;
+import nl.han.ica.cavernthrone.hud.*;
+import nl.han.ica.waterworld.tiles.*;
 import processing.core.PApplet;
 
 /**
@@ -19,10 +24,16 @@ import processing.core.PApplet;
  */
 @SuppressWarnings("serial")
 public class WaterWorld extends GameEngine {
+	
+	private TextObject dashboardTextWeapon;
+	private TextObject dashboardTextAmmo;
+    private HudIcon dashboardIconHP;
+    private HudIcon dashboardIconWeapon;
+    private HudAnimatedIcon dashboardAnimatedIconHP;
 
     private Sound backgroundSound;
     private Sound bubblePopSound;
-    private TextObject dashboardText;
+    
     private BubbleSpawner bubbleSpawner;
     private int bubblesPopped;
     private IPersistence persistence;
@@ -41,11 +52,11 @@ public class WaterWorld extends GameEngine {
     @Override
     public void setupGame() {
 
-        int worldWidth=1204;
-        int worldHeight=903;
+        int worldWidth=2560;
+        int worldHeight=2560;
 
         initializeSound();
-        createDashboard(worldWidth, 100);
+        createDashboard(640, 100);
         initializeTileMap();
         initializePersistence();
 
@@ -65,7 +76,7 @@ public class WaterWorld extends GameEngine {
     private void createViewWithoutViewport(int screenWidth, int screenHeight) {
         View view = new View(screenWidth,screenHeight);
         //view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/background.jpg"));
-        view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/dark_background.png"));
+        view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/Dark_Background.png"));
         setView(view);
         size(screenWidth, screenHeight);
     }
@@ -79,21 +90,21 @@ public class WaterWorld extends GameEngine {
      * @param zoomFactor Factor waarmee wordt ingezoomd
      */
     private void createViewWithViewport(int worldWidth,int worldHeight,int screenWidth,int screenHeight,float zoomFactor) {
-        EdgeFollowingViewport viewPort = new EdgeFollowingViewport(player, (int)Math.ceil(screenWidth/zoomFactor),(int)Math.ceil(screenHeight/zoomFactor),1,1);
+        EdgeFollowingViewport viewPort = new EdgeFollowingViewport(player, (int)Math.ceil(screenWidth/zoomFactor),(int)Math.ceil(screenHeight/zoomFactor), 1, 1);
         viewPort.setTolerance(240, 160, 240, 160);
         View view = new View(viewPort, worldWidth,worldHeight);
         setView(view);
         size(screenWidth, screenHeight);
         //view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/background.jpg"));
-        view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/dark_background.png"));
+        view.setBackground(loadImage("src/main/java/nl/han/ica/waterworld/media/Dark_Background.png"));
     }
 
     /**
      * Initialiseert geluid
      */
     private void initializeSound() {
-        backgroundSound = new Sound(this, "src/main/java/nl/han/ica/waterworld/media/Waterworld.mp3");
-        backgroundSound.loop(-1);
+        //backgroundSound = new Sound(this, "src/main/java/nl/han/ica/waterworld/media/Waterworld.mp3");
+        //backgroundSound.loop(-1);
         bubblePopSound = new Sound(this, "src/main/java/nl/han/ica/waterworld/media/pop.mp3");
     }
 
@@ -112,7 +123,7 @@ public class WaterWorld extends GameEngine {
      * Maakt de spawner voor de bellen aan
      */
     public void createBubbleSpawner() {
-        bubbleSpawner=new BubbleSpawner(this,bubblePopSound,2);
+        bubbleSpawner=new BubbleSpawner(this, bubblePopSound, 2);
     }
 
     /**
@@ -121,9 +132,36 @@ public class WaterWorld extends GameEngine {
      * @param dashboardHeight Gewenste hoogte van dashboard
      */
     private void createDashboard(int dashboardWidth,int dashboardHeight) {
+    	int offset = 16;
+    	int maxColor = 255;
+    	String infinitySymbol = null;
+    	try {
+    	   infinitySymbol = new String(String.valueOf(Character.toString('\u221E')).getBytes("UTF-8"), "UTF-8");
+    	} catch (UnsupportedEncodingException ex) {
+    	    infinitySymbol = "?";
+    	}
+    	
         Dashboard dashboard = new Dashboard(0,0, dashboardWidth, dashboardHeight);
-        dashboardText=new TextObject("");
-        dashboard.addGameObject(dashboardText);
+        dashboardTextWeapon = new TextObject("SMG", offset);
+        dashboardTextWeapon.setForeColor(maxColor, maxColor, maxColor, maxColor);
+        dashboardTextAmmo = new TextObject(infinitySymbol + "/" + infinitySymbol, offset);
+        dashboardTextAmmo.setForeColor(maxColor, maxColor, maxColor, maxColor);
+        
+        Sprite spriteIconHP = new Sprite("src/main/java/nl/han/ica/waterworld/media/dashboard/Dashboard_Icon_HP.png");
+        Sprite spriteIconWeapon = new Sprite("src/main/java/nl/han/ica/waterworld/media/dashboard/Dashboard_Icon_SMG.png");
+        Sprite spriteAnimatedIconHP = new Sprite("src/main/java/nl/han/ica/waterworld/media/dashboard/Dashboard_Animated_Icon_HP.png");
+        int HPOffset = spriteIconHP.getWidth() + offset;
+        int weaponXOffset = dashboardWidth - spriteIconWeapon.getWidth() - offset;
+        int weaponYOffset = spriteIconWeapon.getHeight() + offset;
+        dashboardIconHP = new HudIcon(spriteIconHP);
+        dashboardIconWeapon = new HudIcon(spriteIconWeapon);
+        dashboardAnimatedIconHP = new HudAnimatedIcon(spriteAnimatedIconHP, 11);
+        
+        dashboard.addGameObject(dashboardIconHP, offset, offset);
+        dashboard.addGameObject(dashboardAnimatedIconHP, HPOffset + offset, offset);
+        dashboard.addGameObject(dashboardIconWeapon, weaponXOffset, offset);
+        dashboard.addGameObject(dashboardTextWeapon, weaponXOffset, offset);
+        dashboard.addGameObject(dashboardTextAmmo, weaponXOffset, weaponYOffset + offset);
         addDashboard(dashboard);
     }
 
@@ -145,26 +183,50 @@ public class WaterWorld extends GameEngine {
      */
     private void initializeTileMap() {
         /* TILES */
-        Sprite boardsSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/boards.png");
-        TileType<BoardsTile> boardTileType = new TileType<>(BoardsTile.class, boardsSprite);
+        Sprite floorsSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/tiles/Tile_Ground.png");
+        Sprite wallsSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/tiles/Tile_Wall.png");
+        Sprite floorShadowsSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/tiles/Tile_Ground_Shadow.png");
+        Sprite wallAbovesSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/tiles/Tile_Wall_Above.png");
+        Sprite cratesSprite = new Sprite("src/main/java/nl/han/ica/waterworld/media/tiles/Tile_Crate.png");       
+        TileType<FloorsTile> FloorTileType = new TileType<>(FloorsTile.class, floorsSprite);
+        TileType<WallsTile> WallTileType = new TileType<>(WallsTile.class, wallsSprite);
+        TileType<FloorShadowsTile> FloorShadowTileType = new TileType<>(FloorShadowsTile.class, floorShadowsSprite);
+        TileType<WallAbovesTile> WallAbovesTileType = new TileType<>(WallAbovesTile.class, wallAbovesSprite);
+        TileType<CratesTile> CrateTileType = new TileType<>(CratesTile.class, cratesSprite);
 
-        TileType[] tileTypes = { boardTileType };
-        int tileSize=16;
+        TileType[] tileTypes = { FloorTileType, WallTileType, FloorShadowTileType, WallAbovesTileType, CrateTileType };
+        int tileSize = 16;
         int tilesMap[][] = {
-                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1, 0, 0, 0, 0, 0,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1, 0, 0, 0, 0,-1, 0, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 2,-1,-1,-1,-1,-1,-1,-1,-1, 0},
-                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
         };
         tileMap = new TileMap(tileSize, tileTypes, tilesMap);
     }
@@ -178,7 +240,7 @@ public class WaterWorld extends GameEngine {
      * Vernieuwt het dashboard
      */
     private void refreshDasboardText() {
-        dashboardText.setText("Fuck dit engine"+bubblesPopped);
+    	dashboardAnimatedIconHP.setCurrentFrameIndex(0);
     }
 
     /**
